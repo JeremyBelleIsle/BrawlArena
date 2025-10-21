@@ -1,7 +1,6 @@
 package hockey
 
 import (
-	"BrawlArena/pkg/assets"
 	"bytes"
 	"fmt"
 	"image/color"
@@ -11,11 +10,9 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/hajimehoshi/go-mp3"
 )
 
 const (
@@ -26,12 +23,8 @@ const (
 	borderW      = 24
 	midLineW     = 12
 	playerSpeed  = 4
-	sampleRate   = 44100
 	BalleRadius  = 45
 )
-
-var audioContext *audio.Context
-var player *audio.Player
 
 // Player représente un joueur simple
 type Player struct {
@@ -590,17 +583,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func Hockey() *Game {
-	audioContext = audio.NewContext(sampleRate)
-	decoded, err := mp3.NewDecoder(bytes.NewReader(assets.GetMusiqueBytes()))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// On met la musique en boucle infinie
-	player, err = audio.NewPlayer(audioContext, decoded)
-	player.Rewind()
-	player.Play()
-	return NewGame()
+	game := NewGame()
+	return game
 }
 
 // joueur ne peuvent pas sortirent du terrain - done

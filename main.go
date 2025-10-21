@@ -1,20 +1,29 @@
 package main
 
 import (
+	"BrawlArena/pkg/assets"
 	"BrawlArena/pkg/dodge"
 	"BrawlArena/pkg/hockey"
 	"BrawlArena/pkg/volley"
 	"bytes"
 	"image/color"
 	"log"
-	"math/rand"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/hajimehoshi/go-mp3"
 )
+
+const (
+	sampleRate = 44100
+)
+
+var audioContext *audio.Context
+var player *audio.Player
+var playerm *audio.Player
 
 type Game struct {
 	screenW       int
@@ -30,7 +39,6 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
 	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.PressStart2P_ttf))
 	if err != nil {
 		log.Fatal(err)
@@ -45,6 +53,9 @@ func (g *Game) Update() error {
 		mx, my := ebiten.CursorPosition()
 		if within(mx, my, 90, 360, 120, 120) {
 			g.currentscreen = "HockeyBrawl"
+			playerm.Pause()
+			player.Play()
+			player.Rewind()
 			ebiten.SetWindowSize(hockey.ScreenWidth, hockey.ScreenHeight)
 
 			// Centre la fenêtre sur l'écran
@@ -57,6 +68,9 @@ func (g *Game) Update() error {
 		}
 		if within(mx, my, 270, 360, 120, 120) {
 			g.currentscreen = "VolleyBrawl"
+			playerm.Pause()
+			player.Play()
+			player.Rewind()
 			ebiten.SetWindowSize(volley.ScreenWidth, volley.ScreenHeight)
 
 			// Centre la fenêtre sur l'écran
@@ -69,6 +83,9 @@ func (g *Game) Update() error {
 		}
 		if within(mx, my, 450, 360, 120, 120) {
 			g.currentscreen = "DodgeBrawl"
+			playerm.Pause()
+			player.Play()
+			player.Rewind()
 			ebiten.SetWindowSize(dodge.ScreenWidth, dodge.ScreenHeight)
 
 			// Centre la fenêtre sur l'écran
@@ -81,6 +98,17 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if g.currentscreen != "Menu" && ebiten.IsKeyPressed(ebiten.KeyEscape) {
+		g.currentscreen = "Menu"
+		player.Pause()
+		playerm.Play()
+		playerm.Rewind()
+		ebiten.SetWindowSize(g.screenW, g.screenH)
+		w, h := ebiten.Monitor().Size()
+		x := (w - g.screenW) / 2
+		y := (h - g.screenH) / 2
+		ebiten.SetWindowPosition(x, y)
+	}
 	switch g.currentscreen {
 	case "HockeyBrawl":
 		return g.hockey.Update()
@@ -89,15 +117,16 @@ func (g *Game) Update() error {
 	case "DodgeBrawl":
 		return g.dodge.Update()
 	}
-
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.currentscreen == "Menu" {
-		ebitenutil.DrawRect(screen, 90, 360, 120, 120, color.RGBA{0, 255, 0, 255})
-		ebitenutil.DrawRect(screen, 270, 360, 120, 120, color.RGBA{0, 255, 0, 255})
-		ebitenutil.DrawRect(screen, 450, 360, 120, 120, color.RGBA{0, 255, 0, 255})
+		// Use vector.FillRect instead of deprecated DrawRect
+		vector.FillRect(screen, float32(90), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
+		vector.FillRect(screen, float32(270), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
+		vector.FillRect(screen, float32(450), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
+
 		op := &text.DrawOptions{}
 		op.GeoM.Translate(float64(30), float64(100))
 		op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
@@ -152,6 +181,40 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
+	audioContext = audio.NewContext(sampleRate)
+
+	// --- Musique du jeu ---
+	gameData := bytes.NewReader(assets.GetMusiqueBytes())
+	decodedGame, err := mp3.NewDecoder(gameData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// --- Musique du menu ---
+	menuData := bytes.NewReader(assets.GetMusiqueBytesm())
+	decodedMenu, err := mp3.NewDecoder(menuData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// --- Création des players en boucle infinie ---
+	gameLoop := audio.NewInfiniteLoop(decodedGame, decodedGame.Length())
+	menuLoop := audio.NewInfiniteLoop(decodedMenu, decodedMenu.Length())
+
+	player, err = audioContext.NewPlayer(gameLoop)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	playerm, err = audioContext.NewPlayer(menuLoop)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// --- Lance la musique du menu ---
+	playerm.Play()
+
+	// --- Configuration de la fenêtre ---
 	game := &Game{
 		screenW:       640,
 		screenH:       480,
