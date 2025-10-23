@@ -228,3 +228,5 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+//compteur de kill et de morts pour chaque joueurs

@@ -2,6 +2,7 @@ package volley
 
 import (
 	"bytes"
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -39,6 +40,8 @@ type Player struct {
 	posYD                                      int
 	Dead                                       bool
 	deadCooldown                               float32
+	DeadCNT                                    int
+	KillCNT                                    int
 }
 
 // Game contient l'état
@@ -254,40 +257,55 @@ func (g *Game) Update() error {
 			if g.p1a.playerSpeed == 16 && g.p2a.cooldown <= 0 {
 				g.p2a.Dead = true
 				g.p2a.deadCooldown = 5.0
+				g.p2a.DeadCNT++
+				g.p1a.KillCNT++
 			}
 			if g.p2a.playerSpeed == 16 && g.p1a.cooldown <= 0 {
 				g.p1a.Dead = true
 				g.p1a.deadCooldown = 5.0
+				g.p1a.DeadCNT++
+				g.p2a.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1a.X, g.p1a.Y, playerW, playerH, g.p2b.X, g.p2b.Y, playerW, playerH) {
 			if g.p1a.playerSpeed == 16 && g.p2b.cooldown <= 0 {
 				g.p2b.Dead = true
 				g.p2b.deadCooldown = 5.0
+				g.p2b.DeadCNT++
+				g.p1a.KillCNT++
 			}
 			if g.p2b.playerSpeed == 16 && g.p1a.cooldown <= 0 {
 				g.p1a.Dead = true
 				g.p1a.deadCooldown = 5.0
+				g.p1a.DeadCNT++
+				g.p2b.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1b.X, g.p1b.Y, playerW, playerH, g.p2a.X, g.p2a.Y, playerW, playerH) {
 			if g.p1b.playerSpeed == 16 && g.p2a.cooldown <= 0 {
 				g.p2a.Dead = true
 				g.p2a.deadCooldown = 5.0
+				g.p2a.DeadCNT++
 			}
 			if g.p2a.playerSpeed == 16 && g.p1b.cooldown <= 0 {
 				g.p1b.Dead = true
 				g.p1b.deadCooldown = 5.0
+				g.p1b.DeadCNT++
+				g.p2a.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1b.X, g.p1b.Y, playerW, playerH, g.p2b.X, g.p2b.Y, playerW, playerH) {
 			if g.p1b.playerSpeed == 16 && g.p2b.cooldown <= 0 {
 				g.p2b.Dead = true
 				g.p2b.deadCooldown = 5.0
+				g.p2b.DeadCNT++
+				g.p1b.KillCNT++
 			}
 			if g.p2b.playerSpeed == 16 && g.p1b.cooldown <= 0 {
 				g.p1b.Dead = true
 				g.p1b.deadCooldown = 5.0
+				g.p1b.DeadCNT++
+				g.p2b.KillCNT++
 			}
 		}
 		// vecteur direction
@@ -361,22 +379,44 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		//prochain point
 		vector.DrawFilledCircle(screen, g.targetX, g.targetY, 30, color.RGBA{0, 255, 0, 255}, true)
 	} else {
-		if g.Win == 1 {
+		if g.Win > 0 {
+			// Affichage du titre du gagnant
 			op := &text.DrawOptions{}
-			op.GeoM.Translate(float64(900/4), float64(600/2))
+			op.GeoM.Translate(float64(900/4), float64(200))
 			op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
-			text.Draw(screen, "Team 1 WIN", &text.GoTextFace{
+			text.Draw(screen, fmt.Sprintf("Team %d WIN", g.Win), &text.GoTextFace{
 				Source: mplusFaceSource,
 				Size:   53,
 			}, op)
-		}
-		if g.Win == 2 {
-			op := &text.DrawOptions{}
-			op.GeoM.Translate(float64(900/4), float64(600/2))
-			op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
-			text.Draw(screen, "Team 2 WIN", &text.GoTextFace{
+
+			// Stats équipe 1
+			vector.DrawFilledRect(screen, 150, 300, 100, 100, g.p1a.Color, true)
+			vector.DrawFilledRect(screen, 300, 300, 100, 100, g.p1b.Color, true)
+			op = &text.DrawOptions{}
+			op.GeoM.Translate(150, 420)
+			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p1a.KillCNT, g.p1a.DeadCNT), &text.GoTextFace{
 				Source: mplusFaceSource,
-				Size:   53,
+				Size:   20,
+			}, op)
+			op.GeoM.Translate(150, 0)
+			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p1b.KillCNT, g.p1b.DeadCNT), &text.GoTextFace{
+				Source: mplusFaceSource,
+				Size:   20,
+			}, op)
+
+			// Stats équipe 2
+			vector.DrawFilledRect(screen, 500, 300, 100, 100, g.p2a.Color, true)
+			vector.DrawFilledRect(screen, 650, 300, 100, 100, g.p2b.Color, true)
+			op = &text.DrawOptions{}
+			op.GeoM.Translate(500, 420)
+			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2a.KillCNT, g.p2a.DeadCNT), &text.GoTextFace{
+				Source: mplusFaceSource,
+				Size:   20,
+			}, op)
+			op.GeoM.Translate(150, 0)
+			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2b.KillCNT, g.p2b.DeadCNT), &text.GoTextFace{
+				Source: mplusFaceSource,
+				Size:   20,
 			}, op)
 		}
 	}
