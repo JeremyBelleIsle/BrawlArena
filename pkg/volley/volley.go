@@ -241,6 +241,21 @@ func CircleRectCollide(cx, cy, r, rx, ry, rw, rh float64) bool {
 func RectRectCollide(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 	return x1 < x2+w2 && x1+w1 > x2 && y1 < y2+h2 && y1+h1 > y2
 }
+func (g *Game) RestartGame() {
+	g.Win = 0
+	g.SpeedBalle = 0
+	g.balleX = 451
+	g.balleY = 310
+	g.balleX      =
+	g.balleY      =451
+	g.targetX          =
+	g.targetY          =
+	g.Next_targetX     =
+	g.Next_targetY     =
+	g.SpeedBalle       =
+	g.Win         = 0
+	g.ResetPositions()
+}
 func (g *Game) Update() error {
 	if g.Win == 0 {
 		hue += 0.02
@@ -341,6 +356,15 @@ func (g *Game) Update() error {
 				}
 			}
 		}
+		if g.Win != 0 {
+			if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+				mx, my := ebiten.CursorPosition()
+				bx, by, bw, bh := 350, 350, 200, 60
+				if mx >= bx && mx <= bx+bw && my >= by && my <= by+bh {
+					g.RestartGame()
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -417,6 +441,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2b.KillCNT, g.p2b.DeadCNT), &text.GoTextFace{
 				Source: mplusFaceSource,
 				Size:   20,
+			}, op)
+		}
+
+		if g.Win != 0 {
+			x, y, w, h := 350, 350, 200, 60
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), color.RGBA{100, 100, 255, 255}, false)
+			op := &text.DrawOptions{}
+			op.GeoM.Translate(float64(x+10), float64(y+20))
+			op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
+			text.Draw(screen, "RESTART", &text.GoTextFace{
+				Source: mplusFaceSource,
+				Size:   25,
 			}, op)
 		}
 	}
