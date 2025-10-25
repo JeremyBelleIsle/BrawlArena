@@ -84,6 +84,15 @@ func (g *Game) RestartGame() {
 	g.balleX = 451
 	g.balleY = 310
 	g.dir = 0
+	// Reset les stats des joueurs
+	g.p1a.KillCNT = 0
+	g.p1a.DeadCNT = 0
+	g.p1b.KillCNT = 0
+	g.p1b.DeadCNT = 0
+	g.p2a.KillCNT = 0
+	g.p2a.DeadCNT = 0
+	g.p2b.KillCNT = 0
+	g.p2b.DeadCNT = 0
 	g.ResetPositions()
 }
 func (p *Player) Update(g *Game) {
@@ -189,16 +198,25 @@ func (p *Player) Update(g *Game) {
 		if g.SpeedBalle <= 0 && !g.p1a.balleTake && !g.p1b.balleTake && !g.p2a.balleTake && !g.p2b.balleTake && CircleRectCollide(float64(g.balleX), float64(g.balleY), BalleRadius, p.X, p.Y, playerW, playerH) {
 			p.balleTake = true
 		}
-		if g.SpeedBalle > 0 && !g.p1a.balleTake && !g.p1b.balleTake && !g.p2a.balleTake && !g.p2b.balleTake && CircleRectCollide(float64(g.balleX), float64(g.balleY), BalleRadius, p.X, p.Y, playerW, playerH) {
+		// Collision entre la balle et ce joueur
+		if g.SpeedBalle > 0 && CircleRectCollide(float64(g.balleX), float64(g.balleY), BalleRadius, p.X, p.Y, playerW, playerH) {
 			p.Dead = true
 			p.deadCooldown = 5.0
-			if g.p2a.Dead || g.p2b.Dead {
-				g.Points1++
-			}
-			if g.p1a.Dead || g.p1b.Dead {
+			g.SpeedBalle -= 0.3
+
+			if p == g.p1a || p == g.p1b {
 				g.Points2++
+				g.p2a.KillCNT++
+				g.p2b.KillCNT++
+				p.DeadCNT++
+			} else if p == g.p2a || p == g.p2b {
+				g.Points1++
+				g.p1a.KillCNT++
+				g.p1b.KillCNT++
+				p.DeadCNT++
 			}
 		}
+
 		//si joueur a la balle alors la balle suit le joueur
 		if p.balleTake {
 			g.balleX = float32(p.X)
@@ -495,7 +513,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		// Affichage du score du joueur 2
 		switch g.Points2 {
-		case 0, 1, 2:
+		case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9:
 			op := &text.DrawOptions{}
 			op.GeoM.Translate(850, 100)
 			op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})

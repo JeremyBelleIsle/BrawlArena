@@ -83,6 +83,15 @@ func (g *Game) RestartGame() {
 	g.balleX = 451
 	g.balleY = 310
 	g.dir = 0
+	// Reset les stats des joueurs
+	g.p1a.KillCNT = 0
+	g.p1a.DeadCNT = 0
+	g.p1b.KillCNT = 0
+	g.p1b.DeadCNT = 0
+	g.p2a.KillCNT = 0
+	g.p2a.DeadCNT = 0
+	g.p2b.KillCNT = 0
+	g.p2b.DeadCNT = 0
 	g.ResetPositions()
 }
 func (p *Player) Update(g *Game) {
@@ -381,7 +390,6 @@ func (g *Game) Update() error {
 			if g.p1a.playerSpeed == 16 && g.p2a.cooldown <= 0 {
 				g.p2a.Dead = true
 				g.p2a.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p2a.deadCooldown = 5.0
 				g.p2a.DeadCNT++
@@ -389,7 +397,6 @@ func (g *Game) Update() error {
 			}
 			if g.p2a.playerSpeed == 16 && g.p1a.cooldown <= 0 {
 				g.p1a.Dead = true
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p1a.balleTake = false
 				g.p1a.deadCooldown = 5.0
@@ -399,14 +406,12 @@ func (g *Game) Update() error {
 			if g.p1a.playerSpeed == 16 && g.p2b.cooldown <= 0 {
 				g.p2b.Dead = true
 				g.p2b.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p2b.deadCooldown = 5.0
 			}
 			if g.p2b.playerSpeed == 16 && g.p1a.cooldown <= 0 {
 				g.p1a.Dead = true
 				g.p1a.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p1a.deadCooldown = 5.0
 			}
@@ -415,14 +420,12 @@ func (g *Game) Update() error {
 			if g.p1b.playerSpeed == 16 && g.p2a.cooldown <= 0 {
 				g.p2a.Dead = true
 				g.p2a.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p2a.deadCooldown = 5.0
 			}
 			if g.p2a.playerSpeed == 16 && g.p1b.cooldown <= 0 {
 				g.p1b.Dead = true
 				g.p1b.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p1b.deadCooldown = 5.0
 			}
@@ -431,14 +434,12 @@ func (g *Game) Update() error {
 			if g.p1b.playerSpeed == 16 && g.p2b.cooldown <= 0 {
 				g.p2b.Dead = true
 				g.p2b.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p2b.deadCooldown = 5.0
 			}
 			if g.p2b.playerSpeed == 16 && g.p1b.cooldown <= 0 {
 				g.p1b.Dead = true
 				g.p1b.balleTake = false
-				g.SpeedBalle = 3.5
 				g.dir = 2
 				g.p1b.deadCooldown = 5.0
 			}

@@ -7,7 +7,6 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -66,7 +65,6 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
 	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.PressStart2P_ttf))
 	if err != nil {
 		log.Fatal(err)
@@ -148,7 +146,7 @@ func (p *Player) Update() {
 
 func (p *Player) Draw(screen *ebiten.Image) {
 	if !p.Dead {
-		vector.DrawFilledRect(screen, float32(p.X), float32(p.Y), float32(p.W), float32(p.H), p.Color, true)
+		vector.FillRect(screen, float32(p.X), float32(p.Y), float32(p.W), float32(p.H), p.Color, true)
 	}
 }
 
@@ -242,19 +240,55 @@ func RectRectCollide(x1, y1, w1, h1, x2, y2, w2, h2 float64) bool {
 	return x1 < x2+w2 && x1+w1 > x2 && y1 < y2+h2 && y1+h1 > y2
 }
 func (g *Game) RestartGame() {
-	g.Win = 0
-	g.SpeedBalle = 0
 	g.balleX = 451
 	g.balleY = 310
-	g.balleX      =
-	g.balleY      =451
-	g.targetX          =
-	g.targetY          =
-	g.Next_targetX     =
-	g.Next_targetY     =
-	g.SpeedBalle       =
-	g.Win         = 0
+	g.targetX = 100
+	g.targetY = 300
+	g.Next_targetX = float32(rand.Intn(ScreenWidth-200) + 100)
+	g.Next_targetY = float32(rand.Intn(ScreenHeight-200) + 100)
+	g.SpeedBalle = 3
+	g.Win = 0
+
+	// Reset les stats des joueurs
+	g.p1a.KillCNT = 0
+	g.p1a.DeadCNT = 0
+	g.p1b.KillCNT = 0
+	g.p1b.DeadCNT = 0
+	g.p2a.KillCNT = 0
+	g.p2a.DeadCNT = 0
+	g.p2b.KillCNT = 0
+	g.p2b.DeadCNT = 0
+
 	g.ResetPositions()
+}
+func (g *Game) ResetPositions() {
+	// Reset positions joueurs équipe 1
+	g.p1a.X = float64(100)
+	g.p1a.Y = float64(ScreenHeight - 100)
+	g.p1b.X = float64(100)
+	g.p1b.Y = float64(ScreenHeight - 200)
+
+	// Reset positions joueurs équipe 2
+	g.p2a.X = float64(ScreenWidth - 140)
+	g.p2a.Y = float64(ScreenHeight - 100)
+	g.p2b.X = float64(ScreenWidth - 140)
+	g.p2b.Y = float64(ScreenHeight - 200)
+
+	// Reset vitesse et cooldowns
+	g.p1a.playerSpeed = playerSpeed
+	g.p1b.playerSpeed = playerSpeed
+	g.p2a.playerSpeed = playerSpeed
+	g.p2b.playerSpeed = playerSpeed
+
+	g.p1a.cooldown = 0
+	g.p1b.cooldown = 0
+	g.p2a.cooldown = 0
+	g.p2b.cooldown = 0
+
+	g.p1a.Dead = false
+	g.p1b.Dead = false
+	g.p2a.Dead = false
+	g.p2b.Dead = false
 }
 func (g *Game) Update() error {
 	if g.Win == 0 {
@@ -379,11 +413,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.Fill(dynamicColor)
 
 		// bords de terrain (gauche et droite)
-		vector.DrawFilledRect(screen, 0, 0, borderW, float32(ScreenHeight), g.leftBorderColor, true)
-		vector.DrawFilledRect(screen, float32(ScreenWidth-borderW), 0, borderW, float32(ScreenHeight), g.rightBorderColor, true)
+		vector.FillRect(screen, 0, 0, borderW, float32(ScreenHeight), g.leftBorderColor, true)
+		vector.FillRect(screen, float32(ScreenWidth-borderW), 0, borderW, float32(ScreenHeight), g.rightBorderColor, true)
 
 		// grosse ligne au milieu
-		vector.DrawFilledRect(screen, float32(ScreenWidth/2-midLineW/2), 0, midLineW, float32(ScreenHeight), g.midLineColor, true)
+		vector.FillRect(screen, float32(ScreenWidth/2-midLineW/2), 0, midLineW, float32(ScreenHeight), g.midLineColor, true)
 
 		// dessiner les joueurs
 		g.p1a.Draw(screen)
@@ -391,7 +425,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.p2a.Draw(screen)
 		g.p2b.Draw(screen)
 
-		//dessiner la balle
+		// dessiner la balle
 		centerX := float32(ScreenWidth) / 2
 		centerY := float32(ScreenHeight) / 2
 		distToCenter := float32(math.Hypot(float64(g.balleX-centerX), float64(g.balleY-centerY)))
@@ -399,9 +433,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		minRadius := float32(35)
 		maxRadius := float32(77)
 		balleRadius := minRadius + (maxRadius-minRadius)*(1.0-distToCenter/maxDist)
-		vector.DrawFilledCircle(screen, g.balleX, g.balleY, balleRadius, color.White, true)
-		//prochain point
-		vector.DrawFilledCircle(screen, g.targetX, g.targetY, 30, color.RGBA{0, 255, 0, 255}, true)
+		vector.FillCircle(screen, g.balleX, g.balleY, balleRadius, color.White, true)
+		// prochain point
+		vector.FillCircle(screen, g.targetX, g.targetY, 30, color.RGBA{0, 255, 0, 255}, true)
 	} else {
 		if g.Win > 0 {
 			// Affichage du titre du gagnant
@@ -414,8 +448,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}, op)
 
 			// Stats équipe 1
-			vector.DrawFilledRect(screen, 150, 300, 100, 100, g.p1a.Color, true)
-			vector.DrawFilledRect(screen, 300, 300, 100, 100, g.p1b.Color, true)
+			vector.FillRect(screen, 150, 300, 100, 100, g.p1a.Color, true)
+			vector.FillRect(screen, 300, 300, 100, 100, g.p1b.Color, true)
 			op = &text.DrawOptions{}
 			op.GeoM.Translate(150, 420)
 			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p1a.KillCNT, g.p1a.DeadCNT), &text.GoTextFace{
@@ -429,8 +463,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}, op)
 
 			// Stats équipe 2
-			vector.DrawFilledRect(screen, 500, 300, 100, 100, g.p2a.Color, true)
-			vector.DrawFilledRect(screen, 650, 300, 100, 100, g.p2b.Color, true)
+			vector.FillRect(screen, 500, 300, 100, 100, g.p2a.Color, true)
+			vector.FillRect(screen, 650, 300, 100, 100, g.p2b.Color, true)
 			op = &text.DrawOptions{}
 			op.GeoM.Translate(500, 420)
 			text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2a.KillCNT, g.p2a.DeadCNT), &text.GoTextFace{
@@ -446,7 +480,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		if g.Win != 0 {
 			x, y, w, h := 350, 350, 200, 60
-			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), color.RGBA{100, 100, 255, 255}, false)
+			vector.FillRect(screen, float32(x), float32(y), float32(w), float32(h), color.RGBA{100, 100, 255, 255}, false)
 			op := &text.DrawOptions{}
 			op.GeoM.Translate(float64(x+10), float64(y+20))
 			op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
