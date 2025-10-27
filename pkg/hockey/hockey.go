@@ -42,6 +42,7 @@ type Player struct {
 	balleTake                                  bool
 	DeadCNT                                    int
 	KillCNT                                    int
+	PointsTotal                                float32
 }
 
 // Game contient l'état
@@ -60,6 +61,7 @@ type Game struct {
 	Points2          int
 	goalTimer        time.Time
 	showGoal         bool
+	raftp            int
 }
 
 var (
@@ -95,6 +97,24 @@ func (g *Game) RestartGame() {
 	g.ResetPositions()
 }
 func (p *Player) Update(g *Game) {
+	if float32(p.KillCNT)-float32(p.DeadCNT) >= 0 {
+		p.PointsTotal = float32(p.KillCNT) - float32(p.DeadCNT)
+		if g.Win == 1 && (p == g.p1a || p == g.p1b) {
+			p.PointsTotal *= 1.5
+		}
+		if g.Win == 2 && (p == g.p2a || p == g.p2b) {
+			p.PointsTotal *= 1.5
+		}
+	} else {
+		p.PointsTotal = float32(p.KillCNT) - float32(p.DeadCNT)
+		if g.Win == 1 && (p == g.p1a || p == g.p1b) {
+			p.PointsTotal += 2
+		}
+		if g.Win == 2 && (p == g.p2a || p == g.p2b) {
+			p.PointsTotal += 2
+		}
+
+	}
 	if !p.Dead && !g.showGoal {
 		if p.cooldown > 0 {
 			p.cooldown -= 1.0 / 60.0
@@ -279,6 +299,7 @@ func (p *Player) Draw(screen *ebiten.Image) {
 
 func NewGame() *Game {
 	g := &Game{}
+	g.raftp = rand.Intn(5) + 1
 	g.balleX = 451
 	g.balleY = 310
 	g.Win = 0
@@ -387,7 +408,7 @@ func (g *Game) Update() error {
 		g.p2a.Update(g)
 		g.p2b.Update(g)
 		if RectRectCollide(g.p1a.X, g.p1a.Y, playerW, playerH, g.p2a.X, g.p2a.Y, playerW, playerH) {
-			if g.p1a.playerSpeed == 16 && g.p2a.cooldown <= 0 {
+			if g.p1a.playerSpeed == 16 && g.p2a.cooldown <= 0 && !g.p2a.Dead && !g.p1a.Dead {
 				g.p2a.Dead = true
 				g.p2a.balleTake = false
 				g.dir = 2
@@ -395,53 +416,67 @@ func (g *Game) Update() error {
 				g.p2a.DeadCNT++
 				g.p1a.KillCNT++
 			}
-			if g.p2a.playerSpeed == 16 && g.p1a.cooldown <= 0 {
+			if g.p2a.playerSpeed == 16 && g.p1a.cooldown <= 0 && !g.p2a.Dead && !g.p1a.Dead {
 				g.p1a.Dead = true
 				g.dir = 2
 				g.p1a.balleTake = false
 				g.p1a.deadCooldown = 5.0
+				g.p1a.DeadCNT++
+				g.p2a.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1a.X, g.p1a.Y, playerW, playerH, g.p2b.X, g.p2b.Y, playerW, playerH) {
-			if g.p1a.playerSpeed == 16 && g.p2b.cooldown <= 0 {
+			if g.p1a.playerSpeed == 16 && g.p2b.cooldown <= 0 && !g.p2b.Dead && !g.p1a.Dead {
 				g.p2b.Dead = true
 				g.p2b.balleTake = false
 				g.dir = 2
 				g.p2b.deadCooldown = 5.0
+				g.p2b.DeadCNT++
+				g.p1a.KillCNT++
 			}
-			if g.p2b.playerSpeed == 16 && g.p1a.cooldown <= 0 {
+			if g.p2b.playerSpeed == 16 && g.p1a.cooldown <= 0 && !g.p2b.Dead && !g.p1a.Dead {
 				g.p1a.Dead = true
 				g.p1a.balleTake = false
 				g.dir = 2
 				g.p1a.deadCooldown = 5.0
+				g.p1a.DeadCNT++
+				g.p2b.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1b.X, g.p1b.Y, playerW, playerH, g.p2a.X, g.p2a.Y, playerW, playerH) {
-			if g.p1b.playerSpeed == 16 && g.p2a.cooldown <= 0 {
+			if g.p1b.playerSpeed == 16 && g.p2a.cooldown <= 0 && !g.p1b.Dead && !g.p2a.Dead {
 				g.p2a.Dead = true
 				g.p2a.balleTake = false
 				g.dir = 2
 				g.p2a.deadCooldown = 5.0
+				g.p2a.DeadCNT++
+				g.p1b.KillCNT++
 			}
-			if g.p2a.playerSpeed == 16 && g.p1b.cooldown <= 0 {
+			if g.p2a.playerSpeed == 16 && g.p1b.cooldown <= 0 && !g.p1b.Dead && !g.p2a.Dead {
 				g.p1b.Dead = true
 				g.p1b.balleTake = false
 				g.dir = 2
 				g.p1b.deadCooldown = 5.0
+				g.p1b.DeadCNT++
+				g.p2a.KillCNT++
 			}
 		}
 		if RectRectCollide(g.p1b.X, g.p1b.Y, playerW, playerH, g.p2b.X, g.p2b.Y, playerW, playerH) {
-			if g.p1b.playerSpeed == 16 && g.p2b.cooldown <= 0 {
+			if g.p1b.playerSpeed == 16 && g.p2b.cooldown <= 0 && !g.p1b.Dead && !g.p2b.Dead {
 				g.p2b.Dead = true
 				g.p2b.balleTake = false
 				g.dir = 2
 				g.p2b.deadCooldown = 5.0
+				g.p2b.DeadCNT++
+				g.p1b.KillCNT++
 			}
-			if g.p2b.playerSpeed == 16 && g.p1b.cooldown <= 0 {
+			if g.p2b.playerSpeed == 16 && g.p1b.cooldown <= 0 && !g.p1b.Dead && !g.p2b.Dead {
 				g.p1b.Dead = true
 				g.p1b.balleTake = false
 				g.dir = 2
 				g.p1b.deadCooldown = 5.0
+				g.p2b.DeadCNT++
+				g.p2b.KillCNT++
 			}
 		}
 
@@ -566,7 +601,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		vector.DrawFilledRect(screen, 150, 300, 100, 100, g.p1a.Color, true)
 		vector.DrawFilledRect(screen, 300, 300, 100, 100, g.p1b.Color, true)
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(150, 420)
+		op.GeoM.Translate(50, 420)
 		text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p1a.KillCNT, g.p1a.DeadCNT), &text.GoTextFace{
 			Source: mplusFaceSource,
 			Size:   20,
@@ -581,7 +616,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		vector.DrawFilledRect(screen, 500, 300, 100, 100, g.p2a.Color, true)
 		vector.DrawFilledRect(screen, 650, 300, 100, 100, g.p2b.Color, true)
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(500, 420)
+		op.GeoM.Translate(400, 420)
 		text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2a.KillCNT, g.p2a.DeadCNT), &text.GoTextFace{
 			Source: mplusFaceSource,
 			Size:   20,
@@ -590,6 +625,38 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("K:%d D:%d", g.p2b.KillCNT, g.p2b.DeadCNT), &text.GoTextFace{
 			Source: mplusFaceSource,
 			Size:   20,
+		}, op)
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(150, 420)
+		op.ColorScale.ScaleWithColor(color.RGBA{222, 49, 99, 0})
+		// Points totaux équipe 1
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(150, 450)
+		text.Draw(screen, fmt.Sprintf("Points: %.0f", g.p1a.PointsTotal*126+float32(g.raftp)), &text.GoTextFace{
+			Source: mplusFaceSource,
+			Size:   15,
+		}, op)
+
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(300, 450)
+		text.Draw(screen, fmt.Sprintf("Points: %.0f", g.p1b.PointsTotal*126+float32(g.raftp)), &text.GoTextFace{
+			Source: mplusFaceSource,
+			Size:   15,
+		}, op)
+
+		// Points totaux équipe 2
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(500, 450)
+		text.Draw(screen, fmt.Sprintf("Points: %.0f", g.p2a.PointsTotal*126+float32(g.raftp)), &text.GoTextFace{
+			Source: mplusFaceSource,
+			Size:   15,
+		}, op)
+
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(650, 450)
+		text.Draw(screen, fmt.Sprintf("Points: %.0f", g.p2b.PointsTotal*126+float32(g.raftp)), &text.GoTextFace{
+			Source: mplusFaceSource,
+			Size:   15,
 		}, op)
 	}
 	if g.Win != 0 {

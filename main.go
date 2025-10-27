@@ -122,7 +122,6 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.currentscreen == "Menu" {
-		// Use vector.FillRect instead of deprecated DrawRect
 		vector.FillRect(screen, float32(90), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
 		vector.FillRect(screen, float32(270), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
 		vector.FillRect(screen, float32(450), float32(360), float32(120), float32(120), color.RGBA{0, 255, 0, 255}, true)
@@ -228,5 +227,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-//compteur de kill et de morts pour chaque joueurs
